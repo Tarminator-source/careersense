@@ -1,0 +1,123 @@
+import os
+import json
+import joblib
+import numpy as np
+from dotenv import load_dotenv
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+import google.generativeai as genai
+
+load_dotenv()
+API_KEY = os.environ.get("GOOGLE_API_KEY")
+genai.configure(api_key=API_KEY)
+
+CAREER_LABELS = {
+    0: "Network Security Engineer", 1: "Software Engineer",
+    2: "UI/UX Engineer", 3: "Software Developer",
+    4: "Database Developer", 5: "QA Engineer",
+    6: "Web Developer", 7: "CRM Technical Developer",
+    8: "Technical Supporter", 9: "Systems Security Administrator",
+    10: "Applications Developer", 11: "Mobile Applications Developer",
+}
+
+SYSTEM_PROMPT = """You are CareerSense AI, a friendly and professional career advisor for IT students at FUOYE (Federal University Oye-Ekiti).
+
+Your job is to have a natural conversation with the student to understand their skills, interests, and personality — then recommend the best IT career path for them.
+
+Guidelines:
+- Be warm, encouraging, and conversational
+- Ask one or two questions at a time (never overwhelm with many questions)
+- Gather information about: coding skills, interests (design, security, networking, data, mobile, web), work style (team/solo, creative/analytical), experience level, and goals
+- After gathering enough information (usually 6-10 exchanges), make a career recommendation
+- When you're ready to make a prediction, include this EXACT JSON at the END of your response (nothing after it):
+  {"ready_to_predict": true, "answers": {"q1": <logical_reasoning 1-9>, "q2": <hackathons 0-6>, "q3": <coding_skill 1-9>, "q4": <public_speaking 1-9>, "q5": <self_learning 0/1>, "q6": <extra_courses 0/1>, "q7": "<certification: R Programming/Information Security/Shell Programming/Machine Learning/Full Stack/Hadoop/Python/Distro Making/App Development>", "q8": "<workshop: Database Security/System Designing/Web Technologies/Machine Learning/Hacking/Testing/Data Science/Game Development/Cloud Computing>", "q9": <reading_writing 0-2>, "q10": <memory 0-2>, "q11": <subject_interest 0-9>, "q12": <career_area 0-5>, "q13": <company_type 0-9>, "q14": <takes_advice 0/1>, "q15": <books 0-30>, "q16": <management 0/1>, "q17": <work_style 0/1>, "q18": <team_work 0/1>, "q19": <introvert 0/1>}}
+- Be encouraging and positive about their chosen path
+- Use simple language, avoid jargon
+- Keep responses concise (2-4 sentences max unless explaining something important)"""
+
+
+class ChatbotView(APIView):
+    def post(self, request):
+        try:
+            message = request.data.get('message', '')
+            history = request.data.get('history', [])
+
+            model = genai.GenerativeModel('gemini-1.5-flash')
+
+            # Build conversation history
+            chat_history = []
+            for msg in history[-10:]:  # Last 10 messages for context
+                role = 'user' if msg['role'] == 'user' else 'model'
+                chat_history.append({'role': role, 'parts': [msg['content']]})
+
+            chat = model.start_chat(history=chat_history)
+            full_prompt = f"{SYSTEM_PROMPT}\n\nStudent message: {message}"
+            response = chat.send_message(full_prompt)
+            response_text = response.text
+
+            # Check if AI is ready to predict
+            prediction = None
+            probability = None
+
+            if '"ready_to_predict": true' in response_text:
+                try:
+                    json_start = response_text.rfind('{')
+                    json_end = response_text.rfind('}') + 1
+                    json_str = response_text[json_start:json_end]
+                    pred_data = json.loads(json_str)
+
+                    if pred_data.get('ready_to_predict'):
+                        answers = pred_data.get('answers', {})
+                        prediction, probability = make_prediction(answers)
+                        # Remove JSON from response text
+                        response_text = response_text[:json_start].strip()
+                except Exception as e:
+                    pass
+
+            return Response({
+                'response': response_text,
+                'prediction': prediction,
+                'probability': float(probability) if probability is not None else None,
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({'error': str(e), 'response': 'Sorry, I encountered an error. Please try again.'}, 
+                          status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+def make_prediction(answers):
+    try:
+        model_path = os.path.join(os.path.dirname(__file__), '../ml_models/dtmodel.pkl')
+        model = joblib.load(model_path)
+
+        cert_map = {
+            'R Programming': 0, 'Information Security': 1, 'Shell Programming': 2,
+            'Machine Learning': 3, 'Full Stack': 4, 'Hadoop': 5,
+            'Python': 6, 'Distro Making': 7, 'App Development': 8
+        }
+        workshop_map = {
+            'Database Security': 0, 'System Designing': 1, 'Web Technologies': 2,
+            'Machine Learning': 3, 'Hacking': 4, 'Testing': 5,
+            'Data Science': 6, 'Game Development': 7, 'Cloud Computing': 8
+        }
+
+        data = [
+            int(answers.get('q1', 5)), int(answers.get('q2', 1)),
+            int(answers.get('q3', 5)), int(answers.get('q4', 5)),
+            int(answers.get('q5', 1)), int(answers.get('q6', 1)),
+            cert_map.get(answers.get('q7', 'Python'), 6),
+            workshop_map.get(answers.get('q8', 'Web Technologies'), 2),
+            int(answers.get('q9', 1)), int(answers.get('q10', 1)),
+            int(answers.get('q11', 3)), int(answers.get('q12', 3)),
+            int(answers.get('q13', 4)), int(answers.get('q14', 1)),
+            int(answers.get('q15', 18)), int(answers.get('q16', 0)),
+            int(answers.get('q17', 1)), int(answers.get('q18', 1)),
+            int(answers.get('q19', 0)),
+        ]
+
+        prediction = model.predict([data])[0]
+        probability = model.predict_proba([data])[0][prediction]
+        return int(prediction), float(probability)
+    except Exception as e:
+        return None, None
