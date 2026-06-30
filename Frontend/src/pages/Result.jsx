@@ -12,8 +12,6 @@ const CAREERS = {
   10: "Applications Developer", 11: "Mobile Applications Developer",
 }
 
-const ICONS = { 0:'🔐', 1:'💻', 2:'🎨', 3:'⚙️', 4:'🗄️', 5:'🧪', 6:'🌐', 7:'📊', 8:'🛠️', 9:'🛡️', 10:'📱', 11:'📲' }
-
 const ROADMAPS = {
   0: ["Learn networking fundamentals (TCP/IP, DNS, HTTP)", "Study cybersecurity concepts and ethical hacking", "Get CompTIA Security+ or CEH certification", "Practice with tools like Wireshark, Nmap, Metasploit", "Apply for junior network security roles"],
   1: ["Master data structures and algorithms", "Learn a core language deeply (Python, Java, or C++)", "Build 3-5 projects for your portfolio", "Contribute to open source projects", "Apply for software engineering internships"],
@@ -29,80 +27,91 @@ const ROADMAPS = {
   11: ["Learn React Native or Flutter", "Study iOS and Android fundamentals", "Build and publish a mobile app", "Learn mobile UI/UX best practices", "Apply for junior mobile developer roles"],
 }
 
+const CAREER_IMAGES = {
+  0: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=600&q=80",
+  1: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600&q=80",
+  2: "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=600&q=80",
+  3: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=600&q=80",
+  4: "https://images.unsplash.com/photo-1544383835-bda2bc66a55d?w=600&q=80",
+  5: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600&q=80",
+  6: "https://images.unsplash.com/photo-1547658719-da2b51169166?w=600&q=80",
+  7: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&q=80",
+  8: "https://images.unsplash.com/photo-1573164713988-8665fc963095?w=600&q=80",
+  9: "https://images.unsplash.com/photo-1563986768609-322da13575f3?w=600&q=80",
+  10: "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=600&q=80",
+  11: "https://images.unsplash.com/photo-1526498460520-4c246339dccb?w=600&q=80",
+}
+
 export default function Result() {
   const navigate = useNavigate()
   const { prediction, probability } = useSelector(state => state.chat)
 
-  if (prediction === null) {
+  if (prediction === null || prediction === undefined) {
     return (
-      <div className="min-h-screen bg-[#0a0f0a] text-white flex flex-col">
+      <div style={{ minHeight: '100vh', background: '#0a0f0a', color: 'white', display: 'flex', flexDirection: 'column' }}>
         <Navbar />
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <p className="text-2xl text-gray-400 mb-4">No prediction yet.</p>
-            <button onClick={() => navigate('/chat')}
-              className="px-8 py-3 bg-[#16a34a] rounded-xl font-semibold hover:bg-[#15803d] transition-all">
-              Chat with AI Advisor
-            </button>
-          </div>
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '16px' }}>
+          <p style={{ color: '#9ca3af', fontSize: '18px' }}>No prediction yet.</p>
+          <button onClick={() => navigate('/chat')}
+            style={{ padding: '12px 24px', background: '#16a34a', border: 'none', borderRadius: '10px', color: 'white', fontWeight: '700', cursor: 'pointer' }}>
+            Chat with AI Advisor
+          </button>
         </div>
       </div>
     )
   }
 
   const role = CAREERS[prediction]
-  const icon = ICONS[prediction]
   const confidence = probability ? Math.round(probability * 100) : null
   const roadmap = ROADMAPS[prediction] || []
+  const careerImg = CAREER_IMAGES[prediction] || CAREER_IMAGES[1]
 
   return (
-    <div className="min-h-screen bg-[#0a0f0a] text-white">
+    <div style={{ minHeight: '100vh', background: '#0a0f0a', color: 'white', fontFamily: 'Inter, sans-serif' }}>
       <Navbar />
-      <div className="max-w-4xl mx-auto px-6 pt-28 pb-16">
+      <div style={{ maxWidth: '900px', margin: '0 auto', padding: '100px 24px 60px' }}>
 
         {/* Result hero */}
-        <div className="text-center mb-12">
-          <p className="text-gray-400 mb-4">CareerSense recommends</p>
-          <div className="bg-[#111711] border border-[#16a34a]/30 rounded-3xl p-10 mb-6 inline-block w-full">
-            <div className="text-7xl mb-4">{icon}</div>
-            <h1 className="text-4xl md:text-5xl font-bold mb-4 text-white">{role}</h1>
+        <div style={{ display: 'flex', gap: '40px', alignItems: 'center', flexWrap: 'wrap', marginBottom: '48px' }}>
+          <img src={careerImg} alt={role} style={{ width: '100%', maxWidth: '380px', borderRadius: '16px', border: '1px solid #1a2e1a', objectFit: 'cover', height: '260px' }} />
+          <div style={{ flex: 1, minWidth: '260px' }}>
+            <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '8px' }}>CareerSense recommends</p>
+            <h1 style={{ fontSize: 'clamp(26px, 4vw, 40px)', fontWeight: '800', color: 'white', marginBottom: '16px', lineHeight: '1.2' }}>{role}</h1>
             {confidence && (
-              <div className="inline-flex items-center gap-2 bg-[#0a0f0a] border border-[#16a34a]/30 rounded-full px-4 py-2">
-                <span className="w-2 h-2 bg-[#16a34a] rounded-full"></span>
-                <span className="text-[#4ade80] font-medium">{confidence}% confidence match</span>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: '#111711', border: '1px solid #16a34a', borderRadius: '999px', padding: '6px 16px', marginBottom: '20px' }}>
+                <div style={{ width: '8px', height: '8px', background: '#16a34a', borderRadius: '50%' }}></div>
+                <span style={{ color: '#4ade80', fontSize: '14px', fontWeight: '600' }}>{confidence}% confidence match</span>
               </div>
             )}
+            <p style={{ color: '#9ca3af', lineHeight: '1.7', marginBottom: '24px' }}>
+              Based on your conversation with CareerSense AI, this career aligns perfectly with your skills, interests, and personality. You have what it takes — start building your future today!
+            </p>
+            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+              <button onClick={() => navigate('/chat')}
+                style={{ padding: '11px 20px', background: '#16a34a', border: 'none', borderRadius: '8px', color: 'white', fontWeight: '700', cursor: 'pointer', fontSize: '14px' }}>
+                Continue Chatting
+              </button>
+              <button onClick={() => navigate('/dashboard')}
+                style={{ padding: '11px 20px', background: '#111711', border: '1px solid #1a2e1a', borderRadius: '8px', color: '#9ca3af', fontWeight: '600', cursor: 'pointer', fontSize: '14px' }}>
+                View Dashboard
+              </button>
+            </div>
           </div>
-          <p className="text-gray-400 text-lg">You have what it takes — start building your future today! 💪</p>
         </div>
 
         {/* Roadmap */}
-        <div className="bg-[#111711] border border-[#1a2e1a] rounded-2xl p-8 mb-8">
-          <h2 className="text-2xl font-bold mb-6 flex items-center gap-3">
-            <span className="text-[#4ade80]">🗺️</span> Your Career Roadmap
-          </h2>
-          <div className="flex flex-col gap-4">
+        <div style={{ background: '#111711', border: '1px solid #1a2e1a', borderRadius: '16px', padding: '32px' }}>
+          <h2 style={{ fontSize: '22px', fontWeight: '700', marginBottom: '24px', color: 'white' }}>Your Career Roadmap</h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {roadmap.map((step, i) => (
-              <div key={i} className="flex items-start gap-4">
-                <div className="w-8 h-8 bg-[#16a34a] rounded-lg flex items-center justify-center text-sm font-bold flex-shrink-0 mt-0.5">
+              <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
+                <div style={{ width: '32px', height: '32px', background: '#16a34a', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: '700', fontSize: '13px', flexShrink: 0 }}>
                   {i + 1}
                 </div>
-                <p className="text-gray-300 leading-relaxed pt-1">{step}</p>
+                <div style={{ paddingTop: '6px', color: '#d1d5db', fontSize: '15px', lineHeight: '1.5' }}>{step}</div>
               </div>
             ))}
           </div>
-        </div>
-
-        {/* Action buttons */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <button onClick={() => navigate('/chat')}
-            className="py-4 bg-[#16a34a] rounded-2xl font-semibold hover:bg-[#15803d] transition-all">
-            💬 Continue Chatting with AI
-          </button>
-          <button onClick={() => navigate('/dashboard')}
-            className="py-4 bg-[#111711] border border-[#1a2e1a] rounded-2xl font-semibold hover:bg-[#1a2e1a] transition-all">
-            📊 View Dashboard
-          </button>
         </div>
       </div>
     </div>

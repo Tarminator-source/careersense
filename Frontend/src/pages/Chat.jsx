@@ -24,13 +24,14 @@ export default function Chat() {
   const [loading, setLoading] = useState(false)
   const [sessionId] = useState(() => Math.random().toString(36).substr(2, 9))
   const bottomRef = useRef(null)
+  const textareaRef = useRef(null)
 
   useEffect(() => {
     if (!isLoggedIn) { navigate('/signin'); return }
     if (messages.length === 0) {
       dispatch(addMessage({
         role: 'assistant',
-        content: `Hi ${userName}! 👋 I'm your CareerSense AI Advisor. I'm here to help you discover your perfect IT career path.\n\nLet's start with something simple — **what subjects or topics in IT do you enjoy the most?** For example: coding, networks, design, databases, security...`,
+        content: `Hi ${userName}! I'm your CareerSense AI Advisor.\n\nI'm here to help you discover your perfect IT career path through a simple conversation.\n\n**What subjects or topics in IT do you enjoy the most?** For example: coding, design, networks, security, databases...`,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       }))
     }
@@ -42,9 +43,14 @@ export default function Chat() {
 
   const sendMessage = async () => {
     if (!input.trim() || loading) return
-    const userMsg = { role: 'user', content: input, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
+    const userMsg = {
+      role: 'user', content: input,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    }
     dispatch(addMessage(userMsg))
+    const currentInput = input
     setInput('')
+    if (textareaRef.current) textareaRef.current.style.height = 'auto'
     setLoading(true)
 
     try {
@@ -52,21 +58,17 @@ export default function Chat() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          message: input,
+          message: currentInput,
           session_id: sessionId,
           history: messages.map(m => ({ role: m.role, content: m.content }))
         })
       })
       const data = await res.json()
-
       dispatch(addMessage({
-        role: 'assistant',
-        content: data.response,
-        prediction: data.prediction,
-        probability: data.probability,
+        role: 'assistant', content: data.response,
+        prediction: data.prediction, probability: data.probability,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       }))
-
       if (data.prediction !== undefined && data.prediction !== null) {
         dispatch(setPrediction({ prediction: data.prediction, probability: data.probability }))
       }
@@ -84,85 +86,128 @@ export default function Chat() {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage() }
   }
 
+  const handleInput = (e) => {
+    setInput(e.target.value)
+    e.target.style.height = 'auto'
+    e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px'
+  }
+
   const handleNewChat = () => {
     dispatch(clearChat())
     setTimeout(() => {
       dispatch(addMessage({
         role: 'assistant',
-        content: `Hi ${userName}! 👋 Ready for a fresh start? Tell me — **what IT topics interest you the most?**`,
+        content: `Hi ${userName}! Ready for a fresh start?\n\n**What IT topics interest you the most?**`,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       }))
     }, 100)
   }
 
-  const formatContent = (content) => {
-    return content
-      .replace(/\*\*(.*?)\*\*/g, '<strong class="text-[#4ade80]">$1</strong>')
-      .replace(/\n/g, '<br/>')
-  }
+  const formatContent = (content) => content
+    .replace(/\*\*(.*?)\*\*/g, '<strong style="color:#4ade80">$1</strong>')
+    .replace(/\n/g, '<br/>')
+
+  const initials = userName?.charAt(0)?.toUpperCase() || 'U'
+
+  // CS icon avatar — uses the actual logo icon SVG
+  const CSAvatar = ({ size = 34 }) => (
+    <div style={{
+      width: size, height: size, flexShrink: 0,
+      borderRadius: '10px', overflow: 'hidden',
+      background: '#111711', border: '1px solid #1a2e1a',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+    }}>
+      <img src="/cs-icon.svg" alt="CS" style={{ width: size - 6, height: size - 6, objectFit: 'contain' }} />
+    </div>
+  )
+
+  const UserAvatar = ({ size = 34 }) => (
+    <div style={{
+      width: size, height: size, flexShrink: 0,
+      background: '#16a34a', borderRadius: '10px',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      fontSize: size * 0.4, fontWeight: '700', color: 'white',
+    }}>
+      {initials}
+    </div>
+  )
 
   return (
-    <div className="min-h-screen bg-[#0a0f0a] text-white flex flex-col">
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#0a0f0a', color: 'white', fontFamily: 'Inter, sans-serif' }}>
       <Navbar />
 
-      <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full px-4 pt-20 pb-4">
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', maxWidth: '820px', width: '100%', margin: '0 auto', padding: '72px 16px 0', overflow: 'hidden', boxSizing: 'border-box' }}>
+
         {/* Chat header */}
-        <div className="flex items-center justify-between py-4 border-b border-[#1a2e1a] mb-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-[#16a34a] rounded-xl flex items-center justify-center text-lg">🤖</div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 0', borderBottom: '1px solid #1a2e1a' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <CSAvatar size={42} />
             <div>
-              <h2 className="font-semibold text-white">CareerSense AI</h2>
-              <p className="text-xs text-[#4ade80]">● Online — Ready to help</p>
+              <div style={{ fontWeight: '700', color: 'white', fontSize: '15px' }}>CareerSense AI Advisor</div>
+              <div style={{ color: '#16a34a', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <span style={{ width: '6px', height: '6px', background: '#16a34a', borderRadius: '50%', display: 'inline-block' }}></span>
+                Online — Ready to help
+              </div>
             </div>
           </div>
-          <button onClick={handleNewChat}
-            className="px-4 py-2 text-sm bg-[#111711] border border-[#1a2e1a] rounded-lg hover:bg-[#1a2e1a] transition-all text-gray-400">
-            New Chat
-          </button>
+          <button onClick={handleNewChat} style={{
+            padding: '7px 16px', background: '#111711',
+            border: '1px solid #1a2e1a', borderRadius: '8px',
+            color: '#9ca3af', cursor: 'pointer', fontSize: '13px', fontFamily: 'Inter, sans-serif',
+          }}>New Chat</button>
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto flex flex-col gap-4 pb-4">
+        <div style={{ flex: 1, overflowY: 'auto', padding: '16px 0', display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {messages.map((msg, i) => (
-            <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-              {msg.role === 'assistant' && (
-                <div className="w-8 h-8 bg-[#16a34a] rounded-lg flex items-center justify-center text-sm mr-3 mt-1 flex-shrink-0">🤖</div>
-              )}
-              <div className={`max-w-[80%] rounded-2xl px-4 py-3 ${
-                msg.role === 'user'
-                  ? 'bg-[#16a34a] text-white rounded-br-sm'
-                  : 'bg-[#111711] border border-[#1a2e1a] text-gray-200 rounded-bl-sm'
-              }`}>
-                <div dangerouslySetInnerHTML={{ __html: formatContent(msg.content) }} className="text-sm leading-relaxed" />
-                {msg.prediction !== undefined && msg.prediction !== null && (
-                  <div className="mt-3 p-3 bg-[#0a0f0a] border border-[#16a34a]/50 rounded-xl">
-                    <p className="text-xs text-[#4ade80] font-medium mb-1">🎯 Career Prediction</p>
-                    <p className="font-bold text-white">{CAREERS[msg.prediction]}</p>
-                    {msg.probability && <p className="text-xs text-gray-400 mt-1">{Math.round(msg.probability * 100)}% confidence match</p>}
-                    <button onClick={() => navigate('/result')}
-                      className="mt-2 w-full py-2 bg-[#16a34a] rounded-lg text-sm font-semibold hover:bg-[#15803d] transition-all">
-                      View Full Results & Roadmap →
-                    </button>
-                  </div>
-                )}
-                <p className="text-xs text-gray-500 mt-1">{msg.time}</p>
-              </div>
-              {msg.role === 'user' && (
-                <div className="w-8 h-8 bg-[#1a2e1a] border border-[#16a34a]/30 rounded-lg flex items-center justify-center text-sm ml-3 mt-1 flex-shrink-0">
-                  {userName?.charAt(0)?.toUpperCase() || 'U'}
+            <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start', alignItems: 'flex-start', gap: '10px' }}>
+
+              {msg.role === 'assistant' && <CSAvatar size={34} />}
+
+              <div style={{ maxWidth: '75%' }}>
+                <div style={{
+                  padding: '12px 16px',
+                  borderRadius: msg.role === 'user' ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
+                  background: msg.role === 'user' ? '#16a34a' : '#111711',
+                  border: msg.role === 'assistant' ? '1px solid #1a2e1a' : 'none',
+                  fontSize: '14px', lineHeight: '1.65',
+                  color: msg.role === 'user' ? 'white' : '#e5e7eb',
+                }}>
+                  <div dangerouslySetInnerHTML={{ __html: formatContent(msg.content) }} />
+
+                  {msg.prediction !== undefined && msg.prediction !== null && (
+                    <div style={{ marginTop: '14px', padding: '14px', background: '#0a0f0a', border: '1px solid rgba(22,163,74,0.4)', borderRadius: '12px' }}>
+                      <div style={{ color: '#4ade80', fontSize: '11px', fontWeight: '700', marginBottom: '6px', letterSpacing: '0.05em' }}>CAREER PREDICTION</div>
+                      <div style={{ fontWeight: '800', fontSize: '17px', color: 'white', marginBottom: '4px' }}>{CAREERS[msg.prediction]}</div>
+                      {msg.probability && (
+                        <div style={{ color: '#9ca3af', fontSize: '12px', marginBottom: '12px' }}>{Math.round(msg.probability * 100)}% confidence match</div>
+                      )}
+                      <button onClick={() => navigate('/result')} style={{
+                        width: '100%', padding: '9px', background: '#16a34a',
+                        border: 'none', borderRadius: '8px', color: 'white',
+                        fontWeight: '700', cursor: 'pointer', fontSize: '13px', fontFamily: 'Inter, sans-serif',
+                      }}>View Full Results & Roadmap</button>
+                    </div>
+                  )}
                 </div>
-              )}
+                <div style={{ fontSize: '11px', color: '#4b5563', marginTop: '4px', paddingLeft: msg.role === 'user' ? 0 : '4px', textAlign: msg.role === 'user' ? 'right' : 'left' }}>
+                  {msg.time}
+                </div>
+              </div>
+
+              {msg.role === 'user' && <UserAvatar size={34} />}
             </div>
           ))}
 
+          {/* Typing indicator */}
           {loading && (
-            <div className="flex justify-start">
-              <div className="w-8 h-8 bg-[#16a34a] rounded-lg flex items-center justify-center text-sm mr-3 mt-1">🤖</div>
-              <div className="bg-[#111711] border border-[#1a2e1a] rounded-2xl rounded-bl-sm px-4 py-3">
-                <div className="flex gap-1 items-center h-5">
-                  <div className="w-2 h-2 bg-[#16a34a] rounded-full animate-bounce" style={{animationDelay: '0ms'}}></div>
-                  <div className="w-2 h-2 bg-[#16a34a] rounded-full animate-bounce" style={{animationDelay: '150ms'}}></div>
-                  <div className="w-2 h-2 bg-[#16a34a] rounded-full animate-bounce" style={{animationDelay: '300ms'}}></div>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+              <CSAvatar size={34} />
+              <div style={{ padding: '14px 18px', background: '#111711', border: '1px solid #1a2e1a', borderRadius: '18px 18px 18px 4px' }}>
+                <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
+                  {[0, 1, 2].map(i => (
+                    <div key={i} style={{ width: '8px', height: '8px', background: '#16a34a', borderRadius: '50%', animation: 'bounce 1.2s infinite', animationDelay: `${i * 0.2}s` }} />
+                  ))}
                 </div>
               </div>
             </div>
@@ -171,24 +216,36 @@ export default function Chat() {
         </div>
 
         {/* Input */}
-        <div className="bg-[#111711] border border-[#1a2e1a] rounded-2xl p-3 flex gap-3 items-end">
-          <textarea
-            value={input}
-            onChange={e => setInput(e.target.value)}
-            onKeyDown={handleKey}
-            placeholder="Type your message... (Press Enter to send)"
-            rows={1}
-            className="flex-1 bg-transparent text-white placeholder:text-gray-600 resize-none focus:outline-none text-sm leading-relaxed max-h-32"
-            style={{ overflowY: 'auto' }}
-          />
-          <button onClick={sendMessage} disabled={loading || !input.trim()}
-            className="w-10 h-10 bg-[#16a34a] rounded-xl flex items-center justify-center hover:bg-[#15803d] transition-all disabled:opacity-40 flex-shrink-0">
-            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-            </svg>
-          </button>
+        <div style={{ padding: '12px 0 16px', borderTop: '1px solid #1a2e1a' }}>
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-end', background: '#111711', border: '1px solid #1a2e1a', borderRadius: '14px', padding: '10px 14px' }}>
+            <textarea ref={textareaRef} value={input} onChange={handleInput} onKeyDown={handleKey}
+              placeholder="Type your message... (Enter to send)"
+              rows={1}
+              style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: 'white', fontSize: '14px', resize: 'none', lineHeight: '1.5', maxHeight: '120px', fontFamily: 'Inter, sans-serif' }}
+            />
+            <button onClick={sendMessage} disabled={loading || !input.trim()}
+              style={{ width: '36px', height: '36px', background: input.trim() && !loading ? '#16a34a' : '#1a2e1a', border: 'none', borderRadius: '9px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: input.trim() && !loading ? 'pointer' : 'not-allowed', flexShrink: 0, transition: 'background 0.2s' }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
+                <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+              </svg>
+            </button>
+          </div>
+          <div style={{ textAlign: 'center', marginTop: '8px', fontSize: '11px', color: '#374151' }}>
+            CareerSense AI — FUOYE Final Year Project 2026
+          </div>
         </div>
       </div>
+
+      <style>{`
+        @keyframes bounce {
+          0%, 60%, 100% { transform: translateY(0); }
+          30% { transform: translateY(-6px); }
+        }
+        textarea::placeholder { color: #4b5563; }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #1a2e1a; border-radius: 2px; }
+      `}</style>
     </div>
   )
 }

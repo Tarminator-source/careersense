@@ -1,16 +1,19 @@
 import os
 import json
 import joblib
-import numpy as np
+import logging
 from dotenv import load_dotenv
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 
 load_dotenv()
+logger = logging.getLogger(__name__)
+
 API_KEY = os.environ.get("GOOGLE_API_KEY")
-genai.configure(api_key=API_KEY)
+client = genai.Client(api_key=API_KEY) if API_KEY else None
 
 CAREER_LABELS = {
     0: "Network Security Engineer", 1: "Software Engineer",
@@ -39,21 +42,32 @@ Guidelines:
 
 class ChatbotView(APIView):
     def post(self, request):
+        if not client:
+            return Response(
+                {'response': 'AI service is not configured. Please contact the administrator.', 'error': 'Missing GOOGLE_API_KEY'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
         try:
             message = request.data.get('message', '')
             history = request.data.get('history', [])
 
-            model = genai.GenerativeModel('gemini-1.5-flash')
-
-            # Build conversation history
-            chat_history = []
-            for msg in history[-10:]:  # Last 10 messages for context
+            # Build conversation contents for the new SDK
+            contents = []
+            for msg in history[-10:]:
                 role = 'user' if msg['role'] == 'user' else 'model'
-                chat_history.append({'role': role, 'parts': [msg['content']]})
+                contents.append(types.Content(role=role, parts=[types.Part(text=msg['content'])]))
 
-            chat = model.start_chat(history=chat_history)
-            full_prompt = f"{SYSTEM_PROMPT}\n\nStudent message: {message}"
-            response = chat.send_message(full_prompt)
+            contents.append(types.Content(role='user', parts=[types.Part(text=message)]))
+
+            response = client.models.generate_content(
+                model='gemini-2.0-flash',
+                contents=contents,
+                config=types.GenerateContentConfig(
+                    system_instruction=SYSTEM_PROMPT,
+                    temperature=0.7,
+                )
+            )
             response_text = response.text
 
             # Check if AI is ready to predict
@@ -70,10 +84,9 @@ class ChatbotView(APIView):
                     if pred_data.get('ready_to_predict'):
                         answers = pred_data.get('answers', {})
                         prediction, probability = make_prediction(answers)
-                        # Remove JSON from response text
                         response_text = response_text[:json_start].strip()
                 except Exception as e:
-                    pass
+                    logger.error(f"Failed to parse prediction JSON: {e}")
 
             return Response({
                 'response': response_text,
@@ -82,8 +95,11 @@ class ChatbotView(APIView):
             }, status=status.HTTP_200_OK)
 
         except Exception as e:
-            return Response({'error': str(e), 'response': 'Sorry, I encountered an error. Please try again.'}, 
-                          status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            logger.error(f"Chat error: {e}")
+            return Response(
+                {'error': str(e), 'response': f'Sorry, I encountered an error: {str(e)}. Please try again.'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 def make_prediction(answers):
@@ -120,4 +136,5 @@ def make_prediction(answers):
         probability = model.predict_proba([data])[0][prediction]
         return int(prediction), float(probability)
     except Exception as e:
+        logger.error(f"Prediction error: {e}")
         return None, None

@@ -5,106 +5,177 @@ import Navbar from '../components/Navbar'
 export default function Home() {
   const navigate = useNavigate()
 
-  const features = [
-    { icon: '💬', title: 'Conversational AI', desc: 'Chat naturally with our AI advisor. No forms, no quizzes — just a real conversation about your skills and interests.' },
-    { icon: '🎯', title: 'Accurate Predictions', desc: 'Our machine learning model analyses your profile and predicts your ideal IT career with a confidence score.' },
-    { icon: '🗺️', title: 'Career Roadmap', desc: 'Get a personalised step-by-step roadmap showing exactly what to learn and do to reach your career goal.' },
-    { icon: '📊', title: 'Dashboard', desc: 'Track your career prediction, view your roadmap, and manage your profile all in one place.' },
-  ]
-
-  const careers = ['Software Engineer', 'Data Scientist', 'UI/UX Designer', 'Network Security Expert', 'Mobile Developer', 'Cloud Architect']
-
   return (
-    <div className="min-h-screen bg-[#0a0f0a] text-white">
+    <div style={{ background: '#0a0f0a', color: 'white', minHeight: '100vh', fontFamily: 'Inter, sans-serif' }}>
       <Navbar />
 
-      {/* Hero */}
-      <section className="min-h-screen flex items-center justify-center px-6 pt-20">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 bg-[#111711] border border-[#1a2e1a] rounded-full px-4 py-2 text-[#4ade80] text-sm mb-8">
-            <span className="w-2 h-2 bg-[#16a34a] rounded-full animate-pulse"></span>
-            AI-Powered Career Guidance for IT Students — FUOYE
-          </div>
-
-          <h1 className="text-5xl md:text-6xl font-bold leading-tight mb-6 text-white">
-            Discover Your Ideal<br />
-            <span className="text-[#4ade80]">IT Career Path</span>
-          </h1>
-
-          <p className="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed">
-            CareerSense uses artificial intelligence to understand your skills, interests, and personality — 
-            then recommends the perfect IT career and guides you to get there.
-          </p>
-
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
-            <button onClick={() => navigate('/register')}
-              className="px-8 py-4 bg-[#16a34a] rounded-xl font-semibold text-lg hover:bg-[#15803d] transition-all">
-              Start Your Assessment →
-            </button>
-            <button onClick={() => navigate('/signin')}
-              className="px-8 py-4 bg-[#111711] border border-[#1a2e1a] rounded-xl font-semibold text-lg hover:bg-[#1a2e1a] transition-all">
-              Sign In
-            </button>
-          </div>
-
-          {/* Career tags */}
-          <div className="flex flex-wrap justify-center gap-3">
-            {careers.map((c, i) => (
-              <span key={i} className="px-4 py-2 bg-[#111711] border border-[#1a2e1a] rounded-full text-sm text-gray-400">
-                {c}
-              </span>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Features */}
-      <section className="py-24 px-6 max-w-6xl mx-auto">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">How CareerSense Works</h2>
-          <p className="text-gray-400 text-lg max-w-xl mx-auto">
-            Simple, intelligent, and personalised — designed specifically for IT students.
-          </p>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {features.map((f, i) => (
-            <div key={i} className="bg-[#111711] border border-[#1a2e1a] rounded-2xl p-6 hover:border-[#16a34a]/50 transition-all">
-              <div className="text-4xl mb-4">{f.icon}</div>
-              <h3 className="text-xl font-semibold mb-2 text-white">{f.title}</h3>
-              <p className="text-gray-400 leading-relaxed">{f.desc}</p>
+      {/* HERO SECTION */}
+      <section style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', padding: '100px 24px 60px' }}>
+        <div style={{ maxWidth: '1100px', margin: '0 auto', width: '100%', display: 'flex', alignItems: 'center', gap: '60px', flexWrap: 'wrap' }}>
+          
+          {/* Left: Text */}
+          <div style={{ flex: '1', minWidth: '300px' }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: '#111711', border: '1px solid #1a2e1a', borderRadius: '999px', padding: '6px 16px', marginBottom: '24px' }}>
+              <div style={{ width: '8px', height: '8px', background: '#16a34a', borderRadius: '50%', animation: 'pulse 2s infinite' }}></div>
+              <span style={{ color: '#4ade80', fontSize: '13px', fontWeight: '500' }}>AI-Powered Career Guidance — FUOYE</span>
             </div>
-          ))}
+
+            <h1 style={{ fontSize: 'clamp(36px, 5vw, 56px)', fontWeight: '800', lineHeight: '1.15', marginBottom: '20px', color: 'white' }}>
+              Find Your Ideal<br />
+              <span style={{ color: '#16a34a' }}>IT Career Path</span><br />
+              with AI
+            </h1>
+
+            <p style={{ color: '#9ca3af', fontSize: '17px', lineHeight: '1.7', marginBottom: '36px', maxWidth: '480px' }}>
+              CareerSense uses conversational AI and machine learning to understand your skills and interests — then recommends the perfect IT career and guides you every step of the way.
+            </p>
+
+            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+              <button onClick={() => navigate('/register')}
+                style={{ padding: '14px 28px', background: '#16a34a', border: 'none', borderRadius: '10px', color: 'white', fontWeight: '700', fontSize: '15px', cursor: 'pointer' }}>
+                Get Started Free
+              </button>
+              <button onClick={() => navigate('/signin')}
+                style={{ padding: '14px 28px', background: 'transparent', border: '1px solid #1a2e1a', borderRadius: '10px', color: '#9ca3af', fontWeight: '600', fontSize: '15px', cursor: 'pointer' }}>
+                Sign In
+              </button>
+            </div>
+
+            {/* Stats */}
+            <div style={{ display: 'flex', gap: '32px', marginTop: '48px', flexWrap: 'wrap' }}>
+              {[
+                { value: '12+', label: 'Career Paths' },
+                { value: 'AI', label: 'Powered Chat' },
+                { value: '100%', label: 'Free to Use' },
+              ].map((s, i) => (
+                <div key={i}>
+                  <div style={{ fontSize: '24px', fontWeight: '800', color: '#16a34a' }}>{s.value}</div>
+                  <div style={{ fontSize: '13px', color: '#6b7280' }}>{s.label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Right: Image */}
+          <div style={{ flex: '1', minWidth: '280px', display: 'flex', justifyContent: 'center' }}>
+            <div style={{ position: 'relative', width: '100%', maxWidth: '460px' }}>
+              <img
+                src="https://images.unsplash.com/photo-1551434678-e076c223a692?w=600&q=80"
+                alt="IT career guidance"
+                style={{ width: '100%', borderRadius: '20px', border: '1px solid #1a2e1a', display: 'block' }}
+              />
+              {/* Floating card */}
+              <div style={{ position: 'absolute', bottom: '-16px', left: '-16px', background: '#111711', border: '1px solid #16a34a', borderRadius: '14px', padding: '14px 18px', boxShadow: '0 8px 32px rgba(0,0,0,0.4)' }}>
+                <div style={{ fontSize: '11px', color: '#4ade80', fontWeight: '600', marginBottom: '4px' }}>LATEST PREDICTION</div>
+                <div style={{ fontSize: '15px', fontWeight: '700', color: 'white' }}>Software Engineer</div>
+                <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '2px' }}>94% confidence match</div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* Steps */}
-      <section className="py-24 px-6 bg-[#0d150d]">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl font-bold mb-16">Get Started in 3 Steps</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      {/* HOW IT WORKS */}
+      <section style={{ padding: '80px 24px', background: '#0d150d' }}>
+        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: '56px' }}>
+            <h2 style={{ fontSize: '36px', fontWeight: '800', marginBottom: '12px' }}>How CareerSense Works</h2>
+            <p style={{ color: '#9ca3af', fontSize: '16px', maxWidth: '500px', margin: '0 auto' }}>Simple, intelligent, and personalised — built for IT students at FUOYE.</p>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '24px' }}>
             {[
-              { step: '01', title: 'Create Account', desc: 'Sign up for free in under a minute.' },
-              { step: '02', title: 'Chat with AI', desc: 'Have a natural conversation with our AI advisor about your skills and interests.' },
-              { step: '03', title: 'Get Your Path', desc: 'Receive your career prediction and a personalised roadmap to success.' },
-            ].map((s, i) => (
-              <div key={i} className="flex flex-col items-center">
-                <div className="w-16 h-16 bg-[#16a34a] rounded-2xl flex items-center justify-center text-2xl font-bold mb-4">{s.step}</div>
-                <h3 className="text-xl font-semibold mb-2">{s.title}</h3>
-                <p className="text-gray-400 text-center">{s.desc}</p>
+              {
+                img: 'https://images.unsplash.com/photo-1531482615713-2afd69097998?w=400&q=80',
+                title: 'Chat with AI',
+                desc: 'Have a natural conversation with our AI advisor. No forms or quizzes — just talk about what you enjoy.'
+              },
+              {
+                img: 'https://images.unsplash.com/photo-1504868584819-f8e8b4b6d7e3?w=400&q=80',
+                title: 'Get Predicted',
+                desc: 'Our ML model analyses your responses and predicts the ideal IT career with a confidence score.'
+              },
+              {
+                img: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=400&q=80',
+                title: 'Follow Your Roadmap',
+                desc: 'Receive a step-by-step roadmap showing exactly what to learn and do to reach your career goal.'
+              },
+            ].map((f, i) => (
+              <div key={i} style={{ background: '#111711', border: '1px solid #1a2e1a', borderRadius: '16px', overflow: 'hidden' }}>
+                <img src={f.img} alt={f.title} style={{ width: '100%', height: '180px', objectFit: 'cover', display: 'block' }} />
+                <div style={{ padding: '20px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                    <div style={{ width: '28px', height: '28px', background: '#16a34a', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: '700', fontSize: '13px' }}>{i + 1}</div>
+                    <h3 style={{ fontWeight: '700', fontSize: '16px', color: 'white' }}>{f.title}</h3>
+                  </div>
+                  <p style={{ color: '#9ca3af', fontSize: '14px', lineHeight: '1.6' }}>{f.desc}</p>
+                </div>
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* CAREER PATHS */}
+      <section style={{ padding: '80px 24px' }}>
+        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '60px', flexWrap: 'wrap' }}>
+            <div style={{ flex: '1', minWidth: '280px' }}>
+              <img
+                src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=500&q=80"
+                alt="IT professionals"
+                style={{ width: '100%', borderRadius: '16px', border: '1px solid #1a2e1a' }}
+              />
+            </div>
+            <div style={{ flex: '1', minWidth: '280px' }}>
+              <h2 style={{ fontSize: '34px', fontWeight: '800', marginBottom: '16px' }}>12 IT Career Paths Available</h2>
+              <p style={{ color: '#9ca3af', fontSize: '16px', lineHeight: '1.7', marginBottom: '24px' }}>
+                From software development to cybersecurity, UI/UX design to data science — CareerSense covers all major IT career paths and recommends the one that fits you best.
+              </p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '28px' }}>
+                {['Software Engineer', 'UI/UX Designer', 'Data Scientist', 'Network Security', 'Web Developer', 'Mobile Developer', 'Database Admin', 'QA Engineer'].map((c, i) => (
+                  <span key={i} style={{ padding: '6px 14px', background: '#111711', border: '1px solid #1a2e1a', borderRadius: '999px', fontSize: '13px', color: '#9ca3af' }}>{c}</span>
+                ))}
+              </div>
+              <button onClick={() => navigate('/register')}
+                style={{ padding: '13px 24px', background: '#16a34a', border: 'none', borderRadius: '10px', color: 'white', fontWeight: '700', fontSize: '14px', cursor: 'pointer' }}>
+                Discover Your Path
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section style={{ padding: '80px 24px', background: '#0d150d' }}>
+        <div style={{ maxWidth: '700px', margin: '0 auto', textAlign: 'center' }}>
+          <img
+            src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=700&q=80"
+            alt="Team collaboration"
+            style={{ width: '100%', borderRadius: '16px', marginBottom: '40px', border: '1px solid #1a2e1a' }}
+          />
+          <h2 style={{ fontSize: '36px', fontWeight: '800', marginBottom: '16px' }}>Ready to find your path?</h2>
+          <p style={{ color: '#9ca3af', fontSize: '16px', marginBottom: '28px', lineHeight: '1.7' }}>
+            Join IT students at FUOYE who are discovering their ideal careers with CareerSense AI.
+          </p>
           <button onClick={() => navigate('/register')}
-            className="mt-16 px-8 py-4 bg-[#16a34a] rounded-xl font-semibold text-lg hover:bg-[#15803d] transition-all">
-            Get Started Free →
+            style={{ padding: '14px 32px', background: '#16a34a', border: 'none', borderRadius: '10px', color: 'white', fontWeight: '700', fontSize: '16px', cursor: 'pointer' }}>
+            Start Your Assessment
           </button>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-[#1a2e1a] py-8 px-6 text-center text-gray-500 text-sm">
-        <p>© 2026 CareerSense — Final Year Project, Federal University Oye-Ekiti (FUOYE)</p>
+      {/* FOOTER */}
+      <footer style={{ borderTop: '1px solid #1a2e1a', padding: '24px', textAlign: 'center', color: '#4b5563', fontSize: '13px' }}>
+        2026 CareerSense — Final Year Project, Federal University Oye-Ekiti (FUOYE) | Department of Computer Science
       </footer>
+
+      <style>{`
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.4; }
+        }
+      `}</style>
     </div>
   )
 }

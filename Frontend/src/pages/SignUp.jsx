@@ -5,76 +5,109 @@ import { login } from '../store/authSlice'
 import Navbar from '../components/Navbar'
 import Swal from 'sweetalert2'
 
+const API = import.meta.env.VITE_API_URL
+
 export default function SignUp() {
   const [form, setForm] = useState({ name: '', age: '', email: '', password: '' })
   const [loading, setLoading] = useState(false)
   const dispatch = useDispatch()
   const navigate = useNavigate()
 
+  const inputStyle = {
+    width: '100%', padding: '13px 16px', background: '#0d150d',
+    border: '1px solid #1a2e1a', borderRadius: '10px', color: 'white',
+    fontSize: '15px', outline: 'none', boxSizing: 'border-box',
+    fontFamily: 'Inter, sans-serif',
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!form.name || !form.age || !form.email || !form.password) {
-      Swal.fire({ icon: 'error', title: 'Error', text: 'All fields are required!' }); return
+      Swal.fire({ icon: 'error', title: 'Missing fields', text: 'Please fill in all fields.' }); return
     }
+    if (form.password.length < 6) {
+      Swal.fire({ icon: 'error', title: 'Weak password', text: 'Password must be at least 6 characters.' }); return
+    }
+    setLoading(true)
     try {
-      setLoading(true)
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/signup/`, {
+      const res = await fetch(`${API}/api/auth/signup/`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
       })
       const data = await res.json()
       if (!data.success) {
         setLoading(false)
-        Swal.fire({ icon: 'error', title: 'Error', text: 'An account with this email already exists.' }); return
+        Swal.fire({ icon: 'error', title: 'Account exists', text: 'An account with this email already exists.' }); return
       }
       dispatch(login({ name: form.name, email: form.email }))
-      Swal.fire({ icon: 'success', title: 'Welcome to CareerSense!', showConfirmButton: false, timer: 1500 })
       setLoading(false)
-      navigate('/chat')
+      Swal.fire({ icon: 'success', title: `Welcome, ${form.name}!`, text: 'Your account has been created.', showConfirmButton: false, timer: 1500 })
+      setTimeout(() => navigate('/chat'), 1500)
     } catch {
       setLoading(false)
-      Swal.fire({ icon: 'error', title: 'Error', text: 'Something went wrong.' })
+      Swal.fire({ icon: 'error', title: 'Error', text: 'Something went wrong. Try again.' })
     }
   }
 
-  const inputClass = "w-full bg-[#111711] border border-[#1a2e1a] rounded-xl px-4 py-3 text-white placeholder:text-gray-600 focus:outline-none focus:border-[#16a34a] transition-colors"
+  const fields = [
+    { key: 'name', label: 'Full Name', type: 'text', placeholder: 'e.g. John Doe' },
+    { key: 'age', label: 'Age', type: 'number', placeholder: 'e.g. 22' },
+    { key: 'email', label: 'Email Address', type: 'email', placeholder: 'you@email.com' },
+    { key: 'password', label: 'Password', type: 'password', placeholder: 'Min. 6 characters' },
+  ]
 
   return (
-    <div className="min-h-screen bg-[#0a0f0a] text-white flex flex-col">
+    <div style={{ minHeight: '100vh', background: '#0a0f0a', display: 'flex', flexDirection: 'column', fontFamily: 'Inter, sans-serif' }}>
       <Navbar />
-      <div className="flex-1 flex items-center justify-center px-6 pt-24 pb-12">
-        <div className="w-full max-w-md">
-          <div className="bg-[#111711] border border-[#1a2e1a] rounded-2xl p-8">
-            <div className="text-center mb-8">
-              <div className="w-12 h-12 bg-[#16a34a] rounded-xl flex items-center justify-center mx-auto mb-4 text-2xl">🚀</div>
-              <h2 className="text-2xl font-bold">Create Your Account</h2>
-              <p className="text-gray-400 mt-1">Start your career discovery journey</p>
-            </div>
 
-            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-              {[
-                { key: 'name', label: 'Full Name', type: 'text', placeholder: 'John Doe' },
-                { key: 'age', label: 'Age', type: 'number', placeholder: '22' },
-                { key: 'email', label: 'Email', type: 'email', placeholder: 'you@email.com' },
-                { key: 'password', label: 'Password', type: 'password', placeholder: '••••••••' },
-              ].map(f => (
-                <div key={f.key}>
-                  <label className="text-sm text-gray-400 mb-1 block">{f.label}</label>
-                  <input type={f.type} placeholder={f.placeholder} value={form[f.key]}
-                    onChange={e => setForm({...form, [f.key]: e.target.value})} className={inputClass} />
-                </div>
-              ))}
-              <button type="submit" disabled={loading}
-                className="w-full py-3 bg-[#16a34a] rounded-xl font-semibold hover:bg-[#15803d] transition-all disabled:opacity-50 mt-2">
-                {loading ? 'Creating Account...' : 'Create Account →'}
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '80px 16px 40px' }}>
+        <div style={{ width: '100%', maxWidth: '460px' }}>
+
+          {/* Logo + heading */}
+          <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+            <img src="/cs-logo.svg" alt="CareerSense" style={{ height: '52px', margin: '0 auto 20px', display: 'block' }} />
+            <h1 style={{ fontSize: '26px', fontWeight: '800', color: 'white', marginBottom: '6px' }}>Create Your Account</h1>
+            <p style={{ color: '#6b7280', fontSize: '15px' }}>Start your AI-powered career discovery journey</p>
+          </div>
+
+          {/* Form card */}
+          <div style={{ background: '#111711', border: '1px solid #1a2e1a', borderRadius: '16px', padding: '32px' }}>
+            <form onSubmit={handleSubmit}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '24px' }}>
+                {fields.map(f => (
+                  <div key={f.key}>
+                    <label style={{ display: 'block', color: '#9ca3af', fontSize: '13px', fontWeight: '600', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      {f.label}
+                    </label>
+                    <input type={f.type} placeholder={f.placeholder} value={form[f.key]}
+                      onChange={e => setForm({ ...form, [f.key]: e.target.value })}
+                      style={inputStyle} />
+                  </div>
+                ))}
+              </div>
+
+              <button type="submit" disabled={loading} style={{
+                width: '100%', padding: '14px', background: '#16a34a',
+                border: 'none', borderRadius: '10px', color: 'white',
+                fontWeight: '700', fontSize: '15px', cursor: loading ? 'not-allowed' : 'pointer',
+                opacity: loading ? 0.7 : 1, fontFamily: 'Inter, sans-serif',
+              }}>
+                {loading ? 'Creating Account...' : 'Create Account'}
               </button>
             </form>
 
-            <p className="text-center text-gray-400 text-sm mt-6">
-              Already have an account?{' '}
-              <Link to="/signin" className="text-[#4ade80] hover:text-[#16a34a] font-medium">Sign In</Link>
-            </p>
+            <div style={{ textAlign: 'center', marginTop: '24px', paddingTop: '24px', borderTop: '1px solid #1a2e1a' }}>
+              <span style={{ color: '#6b7280', fontSize: '14px' }}>Already have an account? </span>
+              <Link to="/signin" style={{ color: '#16a34a', fontWeight: '700', fontSize: '14px', textDecoration: 'none' }}>
+                Sign In
+              </Link>
+            </div>
           </div>
+
+          {/* Trust note */}
+          <p style={{ textAlign: 'center', color: '#4b5563', fontSize: '12px', marginTop: '16px' }}>
+            Free to use. No credit card required. Built for FUOYE students.
+          </p>
         </div>
       </div>
     </div>
