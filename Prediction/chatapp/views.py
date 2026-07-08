@@ -61,7 +61,7 @@ class ChatbotView(APIView):
             contents.append(types.Content(role='user', parts=[types.Part(text=message)]))
 
             response = client.models.generate_content(
-                model='gemini-1.5-flash',
+                model='gemini-2.5-flash-lite',
                 contents=contents,
                 config=types.GenerateContentConfig(
                     system_instruction=SYSTEM_PROMPT,
