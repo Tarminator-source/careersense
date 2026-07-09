@@ -15,49 +15,42 @@ logger = logging.getLogger(__name__)
 API_KEY = os.environ.get("GOOGLE_API_KEY")
 client = genai.Client(api_key=API_KEY) if API_KEY else None
 
-CAREER_LABELS = {
-    0: "Network Security Engineer", 1: "Software Engineer",
-    2: "UI/UX Engineer", 3: "Software Developer",
-    4: "Database Developer", 5: "QA Engineer",
-    6: "Web Developer", 7: "CRM Technical Developer",
-    8: "Technical Supporter", 9: "Systems Security Administrator",
-    10: "Applications Developer", 11: "Mobile Applications Developer",
-}
+SYSTEM_PROMPT = """You are CareerSense AI, a career advisor for IT students at FUOYE, Nigeria.
 
-SYSTEM_PROMPT = """You are CareerSense AI, a friendly and professional career advisor for IT students at FUOYE (Federal University Oye-Ekiti).
+YOUR GOAL: Predict the user's ideal IT career in as few messages as possible (maximum 4 exchanges).
 
-Your job is to have a natural conversation with the student to understand their skills, interests, and personality — then recommend the best IT career path for them.
+STRICT RULES:
+- Ask MAXIMUM 2 short questions per message
+- After 3-4 exchanges, you MUST make a prediction — do not keep asking
+- Be brief and friendly — no long paragraphs
+- When ready to predict (after 3-4 exchanges), end your response with this exact JSON on a new line:
+{"ready_to_predict": true, "answers": {"q1": <logical_reasoning 1-9>, "q2": <hackathons 0-6>, "q3": <coding_skill 1-9>, "q4": <public_speaking 1-9>, "q5": <self_learning 0 or 1>, "q6": <extra_courses 0 or 1>, "q7": "<one of: R Programming/Information Security/Shell Programming/Machine Learning/Full Stack/Hadoop/Python/Distro Making/App Development>", "q8": "<one of: Database Security/System Designing/Web Technologies/Machine Learning/Hacking/Testing/Data Science/Game Development/Cloud Computing>", "q9": <reading_writing 0-2>, "q10": <memory 0-2>, "q11": <subject_interest 0-9>, "q12": <career_area 0-5>, "q13": <company_type 0-9>, "q14": <takes_advice 0 or 1>, "q15": <books 0-30>, "q16": <management 0 or 1>, "q17": <work_style 0 or 1>, "q18": <team_work 0 or 1>, "q19": <introvert 0 or 1>}}
 
-Guidelines:
-- Be warm, encouraging, and conversational
-- Ask one or two questions at a time (never overwhelm with many questions)
-- Gather information about: coding skills, interests (design, security, networking, data, mobile, web), work style (team/solo, creative/analytical), experience level, and goals
-- After gathering enough information (usually 6-10 exchanges), make a career recommendation
-- When you're ready to make a prediction, include this EXACT JSON at the END of your response (nothing after it):
-  {"ready_to_predict": true, "answers": {"q1": <logical_reasoning 1-9>, "q2": <hackathons 0-6>, "q3": <coding_skill 1-9>, "q4": <public_speaking 1-9>, "q5": <self_learning 0/1>, "q6": <extra_courses 0/1>, "q7": "<certification: R Programming/Information Security/Shell Programming/Machine Learning/Full Stack/Hadoop/Python/Distro Making/App Development>", "q8": "<workshop: Database Security/System Designing/Web Technologies/Machine Learning/Hacking/Testing/Data Science/Game Development/Cloud Computing>", "q9": <reading_writing 0-2>, "q10": <memory 0-2>, "q11": <subject_interest 0-9>, "q12": <career_area 0-5>, "q13": <company_type 0-9>, "q14": <takes_advice 0/1>, "q15": <books 0-30>, "q16": <management 0/1>, "q17": <work_style 0/1>, "q18": <team_work 0/1>, "q19": <introvert 0/1>}}
-- Be encouraging and positive about their chosen path
-- Use simple language, avoid jargon
-- Keep responses concise (2-4 sentences max unless explaining something important)"""
+FLOW:
+1. First message: Ask about their top IT interest AND coding skill (rate 1-9)
+2. Second message: Ask about work style (team/solo, creative/analytical) AND goals
+3. Third message: Ask one more clarifying question if needed, then predict
+4. By message 4: ALWAYS produce the JSON prediction — never ask more questions
+
+Use defaults for anything not mentioned (coding=5, logic=5, etc.). Make reasonable inferences."""
 
 
 class ChatbotView(APIView):
     def post(self, request):
         if not client:
             return Response(
-                {'response': 'AI service is not configured. Please contact the administrator.', 'error': 'Missing GOOGLE_API_KEY'},
+                {'response': 'AI service not configured. Please contact admin.', 'error': 'Missing GOOGLE_API_KEY'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-
         try:
             message = request.data.get('message', '')
             history = request.data.get('history', [])
 
-            # Build conversation contents for the new SDK
+            # Build conversation for Gemini
             contents = []
-            for msg in history[-10:]:
+            for msg in history[-8:]:  # Keep last 8 messages only
                 role = 'user' if msg['role'] == 'user' else 'model'
                 contents.append(types.Content(role=role, parts=[types.Part(text=msg['content'])]))
-
             contents.append(types.Content(role='user', parts=[types.Part(text=message)]))
 
             response = client.models.generate_content(
@@ -65,12 +58,13 @@ class ChatbotView(APIView):
                 contents=contents,
                 config=types.GenerateContentConfig(
                     system_instruction=SYSTEM_PROMPT,
-                    temperature=0.7,
+                    temperature=0.5,
+                    max_output_tokens=400,  # Keep responses short
                 )
             )
             response_text = response.text
 
-            # Check if AI is ready to predict
+            # Check if AI included prediction JSON
             prediction = None
             probability = None
 
@@ -80,7 +74,6 @@ class ChatbotView(APIView):
                     json_end = response_text.rfind('}') + 1
                     json_str = response_text[json_start:json_end]
                     pred_data = json.loads(json_str)
-
                     if pred_data.get('ready_to_predict'):
                         answers = pred_data.get('answers', {})
                         prediction, probability = make_prediction(answers)
@@ -97,7 +90,7 @@ class ChatbotView(APIView):
         except Exception as e:
             logger.error(f"Chat error: {e}")
             return Response(
-                {'error': str(e), 'response': f'Sorry, I encountered an error: {str(e)}. Please try again.'},
+                {'error': str(e), 'response': f'Sorry, I encountered an error. Please try again.'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
